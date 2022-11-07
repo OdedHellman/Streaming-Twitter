@@ -1,4 +1,3 @@
-import argparse
 import json
 import configparser
 
@@ -11,33 +10,17 @@ WINDOW_SIZE = 60 # number of second setting the timestamp aggregation window
 
 class SetValues(beam.DoFn):
     """A DoFn that sets the values for the output table."""
-    
+
     @staticmethod
     def process(element, window=beam.DoFn.WindowParam):
         window_start = window.start.to_utc_datetime().strftime("%d-%m_%H:%M")
+        
         # instead return an iterable holding the output.
         # We can emitting individual elements with yield statement.
         yield {'language': str.upper(element.lang),
                'count': element.count,
-               'timestamp': window_start,
+               'timestamp': window_start
                }
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--pid',
-                        type=str,
-                        required=True,
-                        help='project id as shown in the GCP console'
-                        )
-    
-    parser.add_argument('--topic_path',
-                        type=str,
-                        required=True,
-                        help='projects/<pid>/topics/<BQ_DATABASE_NAME>'
-                        )
-
-    return parser.parse_known_args()
 
 
 def run():
@@ -49,10 +32,9 @@ def run():
     tweets_table = config['project']['tweets_table']
     project_id = config['project']['project_id']
     agg_table = config['project']['agg_table']
+    topic_path = config['project']['topic_path']
     
-    # Setting up the Beam pipeline options
-    args, pipeline_args = parse_args()
-    options = PipelineOptions(pipeline_args, save_main_session=True, streaming=True)
+    options = PipelineOptions(flags=[project_id, topic_path], save_main_session=True, streaming=True)
     options.view_as(GoogleCloudOptions).project = project_id
 
     # Setting up the tables schemas
@@ -63,36 +45,32 @@ def run():
     # Pipeline
     pipeline = beam.Pipeline(options=options)
 
-    raw_tweets = (pipeline | "ReadFromPubSub" >> beam.io.ReadFromPubSub(topic=args.topic_path)
+    raw_tweets = (pipeline | "ReadFromPubSub" >> beam.io.ReadFromPubSub(topic=topic_path)
                            | "ParseJson" >> beam.Map(lambda element: json.loads(element.decode("utf-8")))
                            )
 
     # Write tweets to BigQuery table
-    raw_tweets | "Write raw to bigquery" >> beam.io.WriteToBigQuery(
+    raw_tweets | "Write back raw data to BigQuery" >> beam.io.WriteToBigQuery(
         tweets_table,
         dataset=dataset_name,
         project=project_id,
-        schema=tweet_schema,
-        create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-        write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+        schema=tweet_schema
     )
 
     # Write back tweets by window, after aggregation
     (raw_tweets
-        | "Window" >> beam.WindowInto(beam.window.FixedWindows(WINDOW_SIZE))
-        | "Aggregate per language" >> beam.GroupBy(lang=lambda x: x["lang"])
+        | "Set Windows size" >> beam.WindowInto(beam.window.FixedWindows(WINDOW_SIZE))
+        | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"])
                                           .aggregate_field(lambda x: x["lang"],
                                                            CountCombineFn(),
                                                            'count'
                                                            )
-        | "Add Timestamp" >> beam.ParDo(SetValues())
-        | "Write agg to bigquery" >> beam.io.WriteToBigQuery(
+        | "Sets TimeStamp and reformat output" >> beam.ParDo(SetValues())
+        | "Write back agg data to BigQuery" >> beam.io.WriteToBigQuery(
             agg_table,
             dataset=dataset_name,
-            project=args.pid,
-            schema=agg_schema,
-            create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
-            write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+            project=project_id,
+            schema=agg_schema
         )
      )
 
