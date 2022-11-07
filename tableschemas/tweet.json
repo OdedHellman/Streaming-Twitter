@@ -31,43 +31,6 @@
             "name": "edit_history_tweet_ids",
             "type": "BYTES",
             "mode": "REPEATED"
-        },
-        {
-            "name": "user",
-            "type": "RECORD",
-            "mode": "NULLABLE",
-            "fields": [
-                {
-                    "name": "created_at",
-                    "type": "STRING",
-                    "mode": "NULLABLE"
-                },
-                {
-                    "name": "description",
-                    "type": "STRING",
-                    "mode": "NULLABLE"
-                },
-                {
-                    "name": "id",
-                    "type": "STRING",
-                    "mode": "NULLABLE"
-                },
-                {
-                    "name": "location",
-                    "type": "STRING",
-                    "mode": "NULLABLE"
-                },
-                {
-                    "name": "name",
-                    "type": "STRING",
-                    "mode": "NULLABLE"
-                },
-                {
-                    "name": "username",
-                    "type": "STRING",
-                    "mode": "NULLABLE"
-                }
-            ]
         }
     ]
 }
