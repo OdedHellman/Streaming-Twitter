@@ -12,7 +12,7 @@ class Client(tweepy.StreamingClient):
     Client class for handling Twitter API responses.
     """
     def __init__(self, stream_rule, project_id, topic_id, topic_path):
-        # Using env var to avoid hardcoding credentials
+        # use env var to avoid hardcoding credentials
         super().__init__(bearer_token=environ['TWITTER_API_BEARER'])
         self.stream_rule = stream_rule
         self.project_id = project_id
