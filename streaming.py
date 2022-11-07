@@ -8,11 +8,12 @@ SEP = '-'*100
 
 class Client(tweepy.StreamingClient):
 
-    def __init__(self, stream_rule, project_id, topic_id):
+    def __init__(self, stream_rule, project_id, topic_id, topic_path):
         super().__init__(bearer_token=environ['TWITTER_API_BEARER'])
         self.stream_rule = stream_rule
         self.project_id = project_id
         self.topic_id = topic_id
+        self.topic_path = topic_path
         self.publisher = pubsub_v1.PublisherClient()
         
     def on_response(self, response):
@@ -24,7 +25,7 @@ class Client(tweepy.StreamingClient):
         data_formatted = json.dumps(result).encode("utf-8")
         print("Streaming: ", data_formatted, '\n', SEP)
         self.publisher.publish(data=data_formatted,
-                               topic=f"projects/{self.project_id}/topics/{self.topic_id}"
+                               topic=topic_path
                                )
         
 def main():
@@ -37,8 +38,9 @@ def main():
     stream_rule = config['project']['rule']
     project_id = config['project']['project_id']
     topic_id = config['project']['topic_id']
+    topic_path = config['project']['topic_path']
 
-    streaming_client = Client(stream_rule, project_id, topic_id)
+    streaming_client = Client(stream_rule, project_id, topic_id, topic_path)
     
     # Delete previous rules
     rules = streaming_client.get_rules().data
