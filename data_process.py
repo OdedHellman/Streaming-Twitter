@@ -15,6 +15,8 @@ class SetValues(beam.DoFn):
     @staticmethod
     def process(element, window=beam.DoFn.WindowParam):
         window_start = window.start.to_utc_datetime().strftime("%d-%m_%H:%M")
+        # instead return an iterable holding the output.
+        # We can emitting individual elements with yield statement.
         yield {'language': str.upper(element.lang),
                'count': element.count,
                'timestamp': window_start,
