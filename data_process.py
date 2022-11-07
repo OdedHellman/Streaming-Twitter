@@ -6,14 +6,14 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import GoogleCloudOptions
 from apache_beam.transforms.combiners import CountCombineFn
 
-WINDOW_SIZE = 60 # number of second for aggregation window
+WINDOW_SIZE = 30 # number of second for aggregation window
 
 class SetValues(beam.DoFn):
     """A DoFn that sets the values for the output table."""
 
     @staticmethod
     def process(element, window=beam.DoFn.WindowParam):
-        window_start = window.start.to_utc_datetime().strftime("%d-%m_%H:%M")
+        window_start = window.start.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
         
         # instead return an iterable holding the output.
         # We can emitting individual elements with yield statement.
