@@ -1,8 +1,9 @@
-from google.cloud import pubsub_v1
-import tweepy
 import json
 from os import environ
 import configparser
+
+import tweepy
+from google.cloud import pubsub_v1
 
 SEP = '-'*100
 
