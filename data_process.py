@@ -24,7 +24,7 @@ class SetValues(beam.DoFn):
 
 
 def run():
-    # Parse config file
+    # Parse config file (can use argparse instead)
     config = configparser.ConfigParser()
     config.read('./config/config.ini')
     
@@ -38,19 +38,20 @@ def run():
     options.view_as(GoogleCloudOptions).project = project_id
 
     # Setting up the tables schemas
-    agg_schema = json.load(open("./tableschemas/agg.json"))
-    tweet_schema = json.load(open("./tableschemas/tweet.json"))
+    agg_schema = json.load(open("./schemas/agg.json"))
+    tweet_schema = json.load(open("./schemas/tweet.json"))
     #print(type(agg_schema).__name__)
 
-    # Pipeline
+    # Pipeline setup
     pipeline = beam.Pipeline(options=options)
 
-    raw_tweets = (pipeline | "ReadFromPubSub" >> beam.io.ReadFromPubSub(topic=topic_path)
-                           | "ParseJson" >> beam.Map(lambda element: json.loads(element.decode("utf-8")))
-                           )
+    tweets = (
+        pipeline | "ReadFromPubSub" >> beam.io.ReadFromPubSub(topic=topic_path)
+                 | "Parse json object" >> beam.Map(lambda element: json.loads(element.decode("utf-8")))
+                 )
 
     # Write tweets to BigQuery table
-    raw_tweets | "Write back raw data to BigQuery" >> beam.io.WriteToBigQuery(
+    tweets | "Write back raw data to BigQuery" >> beam.io.WriteToBigQuery(
         tweets_table,
         dataset=dataset_name,
         project=project_id,
@@ -58,7 +59,7 @@ def run():
     )
 
     # Write back tweets by window, after aggregation
-    (raw_tweets
+    (tweets
         | "Set Windows size" >> beam.WindowInto(beam.window.FixedWindows(WINDOW_SIZE))
         | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"])
                                           .aggregate_field(lambda x: x["lang"],
@@ -74,6 +75,7 @@ def run():
         )
      )
 
+    # Keep the pipeline running
     pipeline.run().wait_until_finish()
 
 
