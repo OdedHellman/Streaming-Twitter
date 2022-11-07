@@ -2,15 +2,18 @@
     "fields": [
         {
             "name": "language",
-            "type": "STRING"
+            "type": "STRING",
+            "mode": "NULLABLE"
         },
         {
             "name": "count",
-            "type": "STRING"
+            "type": "INTEGER",
+            "mode": "NULLABLE"
         },
         {
             "name": "timestamp",
-            "type": "STRING"
+            "type": "STRING",
+            "mode": "NULLABLE"
         }
     ]
 }
