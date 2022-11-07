@@ -1,0 +1,16 @@
+{
+    "fields": [
+        {
+            "name": "Language",
+            "type": "STRING"
+        },
+        {
+            "name": "Count",
+            "type": "STRING"
+        },
+        {
+            "name": "TimeStamp",
+            "type": "STRING"
+        }
+    ]
+}
