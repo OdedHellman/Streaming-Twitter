@@ -6,7 +6,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import GoogleCloudOptions
 from apache_beam.transforms.combiners import CountCombineFn
 
-WINDOW_SIZE = 60 # number of second setting the timestamp aggregation window
+WINDOW_SIZE = 60 # number of second for aggregation window
 
 class SetValues(beam.DoFn):
     """A DoFn that sets the values for the output table."""
