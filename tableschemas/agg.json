@@ -1,15 +1,15 @@
 {
     "fields": [
         {
-            "name": "Language",
+            "name": "language",
             "type": "STRING"
         },
         {
-            "name": "Count",
+            "name": "count",
             "type": "STRING"
         },
         {
-            "name": "TimeStamp",
+            "name": "timestamp",
             "type": "STRING"
         }
     ]
