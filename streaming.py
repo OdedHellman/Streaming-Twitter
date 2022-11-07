@@ -15,7 +15,6 @@ class Client(tweepy.StreamingClient):
         self.topic_id = topic_id
         self.publisher = pubsub_v1.PublisherClient()
         
-
     def on_response(self, response):
         tweet_data = response.data.data
         result = tweet_data
@@ -24,7 +23,6 @@ class Client(tweepy.StreamingClient):
         result["stream_rule"] = self.stream_rule
         data_formatted = json.dumps(result).encode("utf-8")
         print("Streaming: ", data_formatted, '\n', SEP)
-
         self.publisher.publish(data=data_formatted,
                                topic=f"projects/{self.project_id}/topics/{self.topic_id}"
                                )
