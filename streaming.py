@@ -8,8 +8,11 @@ from google.cloud import pubsub_v1
 SEP = '-'*100
 
 class Client(tweepy.StreamingClient):
-
+    """
+    Client class for handling Twitter API responses.
+    """
     def __init__(self, stream_rule, project_id, topic_id, topic_path):
+        # Using env var to avoid hardcoding credentials
         super().__init__(bearer_token=environ['TWITTER_API_BEARER'])
         self.stream_rule = stream_rule
         self.project_id = project_id
@@ -18,21 +21,22 @@ class Client(tweepy.StreamingClient):
         self.publisher = pubsub_v1.PublisherClient()
         
     def on_response(self, response):
-        tweet_data = response.data.data
-        result = tweet_data
+        data = response.data.data
 
         # Write to pubsub
-        result["stream_rule"] = self.stream_rule
-        data_formatted = json.dumps(result).encode("utf-8")
+        data["stream_rule"] = self.stream_rule
+        data_formatted = json.dumps(data).encode("utf-8")
         print("Streaming: ", data_formatted, '\n', SEP)
         self.publisher.publish(data=data_formatted,
                                topic=self.topic_path
                                )
         
 def main():
+    # Response fields
     tweet_fields = ['id', 'text', 'author_id', 'created_at', 'lang']
     user_fields = ['description', 'created_at', 'location']
     
+    # Parse config file (can use argparse instead)
     config = configparser.ConfigParser()
     config.read('./config/config.ini')
     
@@ -43,10 +47,10 @@ def main():
 
     streaming_client = Client(stream_rule, project_id, topic_id, topic_path)
     
-    # Delete previous rules
+    # Delete previous rules -> Twitter "Essential" API only allows 1 rule :( 
     rules = streaming_client.get_rules().data
-    if rules is not None:
-        print("Deleting previous rules")
+    if rules:
+        print("Deleting previous rules...")
         existing_rules = [rule.id for rule in streaming_client.get_rules().data]
         streaming_client.delete_rules(ids=existing_rules)
 
