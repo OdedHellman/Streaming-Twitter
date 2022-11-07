@@ -1,10 +1,10 @@
-import json
 import configparser
+import json
 
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
-from apache_beam.options.pipeline_options import GoogleCloudOptions
 from apache_beam.transforms.combiners import CountCombineFn
+from apache_beam.options.pipeline_options import GoogleCloudOptions
 
 WINDOW_SIZE = 30 # number of second for aggregation window
 
@@ -46,7 +46,7 @@ def run():
     pipeline = beam.Pipeline(options=options)
 
     tweets = (
-        pipeline | "ReadFromPubSub" >> beam.io.ReadFromPubSub(topic=topic_path)
+        pipeline | "Read from PubSub" >> beam.io.ReadFromPubSub(topic=topic_path)
                  | "Parse json object" >> beam.Map(lambda element: json.loads(element.decode("utf-8")))
                  )
 
@@ -66,8 +66,8 @@ def run():
                                                            CountCombineFn(),
                                                            'count'
                                                            )
-        | "Sets TimeStamp and reformat output" >> beam.ParDo(SetValues())
-        | "Write back agg data to BigQuery" >> beam.io.WriteToBigQuery(
+        | "Set timestamp and reformat output" >> beam.ParDo(SetValues())
+        | "Write back aggregated data to BigQuery" >> beam.io.WriteToBigQuery(
             agg_table,
             dataset=dataset_name,
             project=project_id,
