@@ -25,7 +25,7 @@ class Client(tweepy.StreamingClient):
         data_formatted = json.dumps(result).encode("utf-8")
         print("Streaming: ", data_formatted, '\n', SEP)
         self.publisher.publish(data=data_formatted,
-                               topic=topic_path
+                               topic=self.topic_path
                                )
         
 def main():
