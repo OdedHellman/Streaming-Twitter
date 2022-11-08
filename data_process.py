@@ -55,11 +55,11 @@ def run():
     #print(type(agg_schema).__name__)
 
     # Pipeline setup
-    pipeline = beam.Pipeline(options=options)
+    with beam.Pipeline(options=options) as pipeline:
 
     tweets = (
-        pipeline | "Read from PubSub" >> beam.io.ReadFromPubSub(topic=topic_path)
-                 | "Parse json object" >> beam.Map(lambda element: json.loads(element.decode("utf-8")))
+            pipeline | "Read from PubSub" >> beam.io.ReadFromPubSub(topic_path)
+                    | "Parse json object" >> beam.Map(lambda x: json.loads(x.decode("utf-8")))
                  )
 
     # Write tweets to BigQuery table
@@ -72,7 +72,7 @@ def run():
 
     # Write back tweets by window, after aggregation
     (tweets
-        | "Set Windows size" >> beam.WindowInto(beam.window.FixedWindows(WINDOW_SIZE))
+            | "Set Windows size" >> beam.WindowInto(beam.window.FixedWindows(window_size))
         | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"])
                                           .aggregate_field(lambda x: x["lang"],
                                                            CountCombineFn(),
