@@ -14,13 +14,14 @@ class SetValues(beam.DoFn):
 
     @staticmethod
     def process(element, window=beam.DoFn.WindowParam):
-        window_start = window.start.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
+        start_window = window.start.to_utc_datetime().strftime("%M:%S")
+        end_window = window.end.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
         
         # instead return an iterable holding the output.
         # We can emitting individual elements with a yield statement.
         yield {'language': element.lang,
                'count': element.count,
-               'timestamp': window_start
+               'interval_time': f'{end_window}--{start_window}'
                }
 
 class SetUpper(beam.DoFn):
