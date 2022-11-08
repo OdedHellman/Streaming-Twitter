@@ -8,18 +8,17 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.transforms.combiners import CountCombineFn
 from apache_beam.options.pipeline_options import GoogleCloudOptions
 
-WINDOW_SIZE = 30 # number of second for aggregation window
 
 class SetValues(beam.DoFn):
-    """A DoFn that sets the values for the output table."""
+    """A simple DoFn that sets the values for the output table."""
 
     @staticmethod
     def process(element, window=beam.DoFn.WindowParam):
         window_start = window.start.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
         
         # instead return an iterable holding the output.
-        # We can emitting individual elements with yield statement.
-        yield {'language': str.upper(element.lang),
+        # We can emitting individual elements with a yield statement.
+        yield {'language': element.lang,
                'count': element.count,
                'timestamp': window_start
                }
@@ -34,17 +33,19 @@ class SetUpper(beam.DoFn):
         # instead return an iterable holding the output.
         # We can emitting individual elements with a yield statement.
         yield element
+        
 
 def run():
     # Parse config file (can use argparse instead)
     config = configparser.ConfigParser()
     config.read('./config/config.ini')
     
-    dataset_name = config['project']['dataset_name']
-    tweets_table = config['project']['tweets_table']
-    project_id = config['project']['project_id']
-    agg_table = config['project']['agg_table']
-    topic_path = config['project']['topic_path']
+    dataset_name = config['bigquery']['dataset_name']
+    tweets_table = config['bigquery']['tweets_table']
+    project_id = config['bigquery']['project_id']
+    agg_table = config['bigquery']['agg_table']
+    topic_path = config['bigquery']['topic_path']
+    window_size = int(config['project']['WINDOW_SIZE'])
     
     options = PipelineOptions(flags=[project_id, topic_path], save_main_session=True, streaming=True)
     options.view_as(GoogleCloudOptions).project = project_id
@@ -57,39 +58,39 @@ def run():
     # Pipeline setup
     with beam.Pipeline(options=options) as pipeline:
 
-    tweets = (
+        tweets = (
             pipeline | "Read from PubSub" >> beam.io.ReadFromPubSub(topic_path)
                     | "Parse json object" >> beam.Map(lambda x: json.loads(x.decode("utf-8")))
-                 )
+                    )
 
-    # Write tweets to BigQuery table
-    tweets | "Write back raw data to BigQuery" >> beam.io.WriteToBigQuery(
-        tweets_table,
-        dataset=dataset_name,
-        project=project_id,
-        schema=tweet_schema
-    )
-
-    # Write back tweets by window, after aggregation
-    (tweets
-            | "Set Windows size" >> beam.WindowInto(beam.window.FixedWindows(window_size))
-        | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"])
-                                          .aggregate_field(lambda x: x["lang"],
-                                                           CountCombineFn(),
-                                                           'count'
-                                                           )
-        | "Set timestamp and reformat output" >> beam.ParDo(SetValues())
-            | "Set language field to UpperCase" >> beam.ParDo(SetUpper())
-        | "Write back aggregated data to BigQuery" >> beam.io.WriteToBigQuery(
-            agg_table,
+        # Write tweets to BigQuery table
+        tweets | "Write back raw data to BigQuery" >> beam.io.WriteToBigQuery(
+            tweets_table,
             dataset=dataset_name,
             project=project_id,
-            schema=agg_schema
+            schema=tweet_schema
         )
-     )
 
-    # Keep the pipeline running
-    pipeline.run().wait_until_finish()
+        # Write back tweets by window, after aggregation
+        (tweets
+            | "Set Windows size" >> beam.WindowInto(beam.window.FixedWindows(window_size))
+            | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"])
+                                            .aggregate_field(lambda x: x["lang"],
+                                                            CountCombineFn(),
+                                                            'count'
+                                                            )
+            | "Set timestamp and reformat output" >> beam.ParDo(SetValues())
+            | "Set language field to UpperCase" >> beam.ParDo(SetUpper())
+            | "Write back aggregated data to BigQuery" >> beam.io.WriteToBigQuery(
+                agg_table,
+                dataset=dataset_name,
+                project=project_id,
+                schema=agg_schema
+            )
+        )
+
+        # Keep the pipeline running
+        pipeline.run().wait_until_finish()
 
 
 if __name__ == "__main__":
