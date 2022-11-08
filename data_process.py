@@ -27,7 +27,7 @@ class SetValues(beam.DoFn):
     @staticmethod
     def process(element, window=beam.DoFn.WindowParam):
         start_window = window.start.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
-        end_window = window.end.to_utc_datetime().strftime("%M:%S")
+        end_window = window.end.to_utc_datetime().strftime("%H:%M:%S")
 
         # instead return an iterable holding the output.
         # We can emitting individual elements with a yield statement.
