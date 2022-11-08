@@ -19,12 +19,13 @@ class Client(tweepy.StreamingClient):
         self.publisher = pubsub_v1.PublisherClient()
         
     def on_response(self, response):
+        """Override the default on_response method to handle the response."""
         data = response.data.data
-
-        # Write to pubsub
         data["stream_rule"] = self.stream_rule
         data_formatted = json.dumps(data).encode("utf-8")
-        print("Streaming: ", data_formatted, '\n', SEP)
+        print(data_formatted, '\n', SEP)
+        
+        # publish to pubsub
         self.publisher.publish(data=data_formatted,
                                topic=self.topic_path
                                )
