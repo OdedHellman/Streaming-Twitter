@@ -58,10 +58,11 @@ def run():
     # Pipeline setup
     with beam.Pipeline(options=options) as pipeline:
 
-        tweets = (
-            pipeline | "Read from PubSub" >> beam.io.ReadFromPubSub(topic_path)
-                     | "Parse json object" >> beam.Map(lambda x: json.loads(x.decode("utf-8")))
-                     )
+        # Read from PubSub and parse the data
+        tweets = ( pipeline
+                | "Read from PubSub" >> beam.io.ReadFromPubSub(topic_path)
+                | "Parse json object" >> beam.Map(lambda x: json.loads(x.decode("utf-8")))
+                )
 
         # Write tweets to BigQuery table
         tweets | "Write back raw data to BigQuery" >> beam.io.WriteToBigQuery(
