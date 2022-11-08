@@ -1,11 +1,10 @@
-import json
 from os import environ
+import json
 import configparser
-
 import tweepy
-from google.cloud import pubsub_v1
+from google.cloud.pubsub_v1 import PublisherClient
 
-SEP = '-'*100
+SEP = '-' * 100
 
 class Client(tweepy.StreamingClient):
     """
@@ -16,7 +15,7 @@ class Client(tweepy.StreamingClient):
         super().__init__(bearer_token=environ['TWITTER_API_BEARER'])
         self.stream_rule = stream_rule
         self.topic_path = topic_path
-        self.publisher = pubsub_v1.PublisherClient()
+        self.publisher = PublisherClient()
         
     def on_response(self, response):
         """Override the default on_response method to handle the response."""
