@@ -1,12 +1,12 @@
 {
     "fields": [
         {
-            "name": "language",
+            "name": "tweets_language",
             "type": "STRING",
             "mode": "NULLABLE"
         },
         {
-            "name": "count",
+            "name": "tweets_count",
             "type": "INTEGER",
             "mode": "NULLABLE"
         },

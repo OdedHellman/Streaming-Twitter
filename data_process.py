@@ -14,7 +14,7 @@ class SetUpper(beam.DoFn):
 
     @staticmethod
     def process(element):
-        element['language'] = str.upper(element['language'])
+        element['tweets_language'] = str.upper(element['tweets_language'])
 
         # instead return an iterable holding the output.
         # We can emitting individual elements with a yield statement.
@@ -26,14 +26,14 @@ class SetValues(beam.DoFn):
 
     @staticmethod
     def process(element, window=beam.DoFn.WindowParam):
-        start_window = window.start.to_utc_datetime().strftime("%M:%S")
-        end_window = window.end.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
+        start_window = window.start.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
+        end_window = window.end.to_utc_datetime().strftime("%M:%S")
 
         # instead return an iterable holding the output.
         # We can emitting individual elements with a yield statement.
-        yield {'language': element.lang,
-               'count': element.count,
-               'interval_time': f'{end_window}--{start_window}'
+        yield {'tweets_language': element.tweets_language,
+               'tweets_count': element.tweets_count,
+               'interval_time': f'{start_window}<>{end_window}'
                }
         
         
@@ -80,10 +80,10 @@ def run():
         (tweets
             | "Set Window size" >> beam.WindowInto(beam.window.FixedWindows(window_size * 60))
             # GroupBy work implicitly on a per-window basis
-            | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"]) 
+            | "Aggregation for each language" >> beam.GroupBy(tweets_language=lambda x: x["lang"]) 
                                             .aggregate_field(field=lambda x: x["lang"],
                                                             combine_fn=CountCombineFn(),
-                                                            dest='count'
+                                                            dest='tweets_count'
                                                             )
             | "Set interval time and reformat output" >> beam.ParDo(SetValues())
             | "Set language field to UpperCase" >> beam.ParDo(SetUpper())
