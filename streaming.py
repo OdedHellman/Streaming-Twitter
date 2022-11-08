@@ -41,9 +41,9 @@ def main():
     config.read('./config/config.ini')
     
     stream_rule = config['project']['rule']
-    project_id = config['project']['project_id']
-    topic_id = config['project']['topic_id']
-    topic_path = config['project']['topic_path']
+    project_id = config['bigquery']['project_id']
+    topic_id = config['bigquery']['topic_id']
+    topic_path = config['bigquery']['topic_path']
 
     streaming_client = Client(stream_rule, project_id, topic_id, topic_path)
     
