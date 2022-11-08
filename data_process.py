@@ -42,9 +42,9 @@ def run():
     
     dataset_name = config['bigquery']['dataset_name']
     tweets_table = config['bigquery']['tweets_table']
-    project_id = config['bigquery']['project_id']
     agg_table = config['bigquery']['agg_table']
-    topic_path = config['bigquery']['topic_path']
+    project_id = config['gcp']['project_id']
+    topic_path = config['gcp']['topic_path']
     window_size = int(config['project']['WINDOW_SIZE'])
     
     options = PipelineOptions(flags=[project_id, topic_path], save_main_session=True, streaming=True)
