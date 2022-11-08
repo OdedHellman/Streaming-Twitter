@@ -49,8 +49,9 @@ def main():
     rules = stream.get_rules().data
     if rules:
         print("Deleting previous rules...")
-        existing_rules = [rule.id for rule in stream.get_rules().data]
-        stream.delete_rules(ids=existing_rules)
+        stream.delete_rules(
+            [rule.id for rule in stream.get_rules().data]
+            )
 
     # Add the rule and run the stream
     stream.add_rules(tweepy.StreamRule(stream_rule))

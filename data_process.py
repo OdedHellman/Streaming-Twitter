@@ -9,21 +9,6 @@ from apache_beam.transforms.combiners import CountCombineFn
 from apache_beam.options.pipeline_options import GoogleCloudOptions
 
 
-class SetValues(beam.DoFn):
-    """A simple DoFn that sets the values for the output table."""
-
-    @staticmethod
-    def process(element, window=beam.DoFn.WindowParam):
-        start_window = window.start.to_utc_datetime().strftime("%M:%S")
-        end_window = window.end.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
-        
-        # instead return an iterable holding the output.
-        # We can emitting individual elements with a yield statement.
-        yield {'language': element.lang,
-               'count': element.count,
-               'interval_time': f'{end_window}--{start_window}'
-               }
-
 class SetUpper(beam.DoFn):
     """A simple DoFn that Upper 'language' field"""
 
@@ -34,8 +19,24 @@ class SetUpper(beam.DoFn):
         # instead return an iterable holding the output.
         # We can emitting individual elements with a yield statement.
         yield element
-        
 
+
+class SetValues(beam.DoFn):
+    """A simple DoFn that sets the values for the output table."""
+
+    @staticmethod
+    def process(element, window=beam.DoFn.WindowParam):
+        start_window = window.start.to_utc_datetime().strftime("%M:%S")
+        end_window = window.end.to_utc_datetime().strftime("%d-%m-%Y, %H:%M:%S")
+
+        # instead return an iterable holding the output.
+        # We can emitting individual elements with a yield statement.
+        yield {'language': element.lang,
+               'count': element.count,
+               'interval_time': f'{end_window}--{start_window}'
+               }
+        
+        
 def run():
     # Parse config file (can use argparse instead)
     config = configparser.ConfigParser()
@@ -46,7 +47,7 @@ def run():
     agg_table = config['bigquery']['agg_table']
     project_id = config['gcp']['project_id']
     topic_path = config['gcp']['topic_path']
-    window_size = int(config['project']['WINDOW_SIZE'])
+    window_size = float(config['project']['WINDOW_SIZE'])
     
     options = PipelineOptions(flags=[project_id, topic_path], save_main_session=True, streaming=True)
     options.view_as(GoogleCloudOptions).project = project_id
@@ -62,11 +63,13 @@ def run():
         # Read from PubSub and parse the data
         tweets = ( pipeline
                 | "Read from PubSub" >> beam.io.ReadFromPubSub(topic_path)
-                | "Parse json object" >> beam.Map(lambda x: json.loads(x.decode("utf-8")))
+                | "Parse json object" >> beam.Map(
+                    lambda x: json.loads(x.decode("utf-8"))
+                    )
                 )
 
         # Write tweets to BigQuery table
-        tweets | "Write back raw data to BigQuery" >> beam.io.WriteToBigQuery(
+        tweets | "Write back raw tweets to BigQuery" >> beam.io.WriteToBigQuery(
             tweets_table,
             dataset=dataset_name,
             project=project_id,
@@ -75,14 +78,14 @@ def run():
 
         # Write back tweets by window, after aggregation
         (tweets
-            | "Set Windows size" >> beam.WindowInto(beam.window.FixedWindows(window_size))
+            | "Set Window size" >> beam.WindowInto(beam.window.FixedWindows(window_size * 60))
             # GroupBy work implicitly on a per-window basis
             | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"]) 
-                                            .aggregate_field(lambda x: x["lang"],
-                                                            CountCombineFn(),
-                                                            'count'
+                                            .aggregate_field(field=lambda x: x["lang"],
+                                                            combine_fn=CountCombineFn(),
+                                                            dest='count'
                                                             )
-            | "Set timestamp and reformat output" >> beam.ParDo(SetValues())
+            | "Set interval time and reformat output" >> beam.ParDo(SetValues())
             | "Set language field to UpperCase" >> beam.ParDo(SetUpper())
             | "Write back aggregated data to BigQuery" >> beam.io.WriteToBigQuery(
                 agg_table,
