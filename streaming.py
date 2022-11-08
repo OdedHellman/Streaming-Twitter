@@ -11,12 +11,10 @@ class Client(tweepy.StreamingClient):
     """
     Client class for handling Twitter API responses.
     """
-    def __init__(self, stream_rule, project_id, topic_id, topic_path):
+    def __init__(self, stream_rule, topic_path):
         # use env var to avoid hardcoding credentials
         super().__init__(bearer_token=environ['TWITTER_API_BEARER'])
         self.stream_rule = stream_rule
-        self.project_id = project_id
-        self.topic_id = topic_id
         self.topic_path = topic_path
         self.publisher = pubsub_v1.PublisherClient()
         
@@ -41,11 +39,9 @@ def main():
     config.read('./config/config.ini')
     
     stream_rule = config['project']['rule']
-    project_id = config['bigquery']['project_id']
-    topic_id = config['bigquery']['topic_id']
-    topic_path = config['bigquery']['topic_path']
+    topic_path = config['gcp']['topic_path']
 
-    stream = Client(stream_rule, project_id, topic_id, topic_path)
+    stream = Client(stream_rule, topic_path)
     
     # Delete previous rules -> Twitter "Essential" API only allows 1 rule :( 
     rules = stream.get_rules().data
