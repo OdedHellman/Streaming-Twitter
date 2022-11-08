@@ -1,5 +1,7 @@
 import configparser
 import json
+import warnings
+warnings.filterwarnings("ignore")
 
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
