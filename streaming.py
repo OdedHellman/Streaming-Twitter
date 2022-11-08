@@ -18,7 +18,9 @@ class Client(tweepy.StreamingClient):
         self.publisher = PublisherClient()
         
     def on_response(self, response):
-        """Override the default on_response method to handle the response."""
+        """
+        Override the default on_response method to handle the response.
+        """
         data = response.data.data
         data["stream_rule"] = self.stream_rule
         data_formatted = json.dumps(data).encode("utf-8")
