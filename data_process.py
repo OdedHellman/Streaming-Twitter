@@ -75,7 +75,8 @@ def run():
         # Write back tweets by window, after aggregation
         (tweets
             | "Set Windows size" >> beam.WindowInto(beam.window.FixedWindows(window_size))
-            | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"])
+            # GroupBy work implicitly on a per-window basis
+            | "Aggregation for each language" >> beam.GroupBy(lang=lambda x: x["lang"]) 
                                             .aggregate_field(lambda x: x["lang"],
                                                             CountCombineFn(),
                                                             'count'
