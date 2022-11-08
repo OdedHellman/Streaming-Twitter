@@ -45,20 +45,19 @@ def main():
     topic_id = config['bigquery']['topic_id']
     topic_path = config['bigquery']['topic_path']
 
-    streaming_client = Client(stream_rule, project_id, topic_id, topic_path)
+    stream = Client(stream_rule, project_id, topic_id, topic_path)
     
     # Delete previous rules -> Twitter "Essential" API only allows 1 rule :( 
-    rules = streaming_client.get_rules().data
+    rules = stream.get_rules().data
     if rules:
         print("Deleting previous rules...")
-        existing_rules = [rule.id for rule in streaming_client.get_rules().data]
-        streaming_client.delete_rules(ids=existing_rules)
+        existing_rules = [rule.id for rule in stream.get_rules().data]
+        stream.delete_rules(ids=existing_rules)
 
     # Add the rule and run the stream
-    streaming_client.add_rules(tweepy.StreamRule(stream_rule))
-    streaming_client.filter(tweet_fields=tweet_fields,
-                            user_fields=user_fields
-                            )
+    stream.add_rules(tweepy.StreamRule(stream_rule))
+    stream.filter(tweet_fields=tweet_fields,
+                  user_fields=user_fields)
 
 if __name__ == "__main__":
     main()
