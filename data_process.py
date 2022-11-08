@@ -24,6 +24,16 @@ class SetValues(beam.DoFn):
                'timestamp': window_start
                }
 
+class SetUpper(beam.DoFn):
+    """A simple DoFn that Upper 'language' field"""
+
+    @staticmethod
+    def process(element):
+        element['language'] = str.upper(element['language'])
+
+        # instead return an iterable holding the output.
+        # We can emitting individual elements with a yield statement.
+        yield element
 
 def run():
     # Parse config file (can use argparse instead)
@@ -69,6 +79,7 @@ def run():
                                                            'count'
                                                            )
         | "Set timestamp and reformat output" >> beam.ParDo(SetValues())
+            | "Set language field to UpperCase" >> beam.ParDo(SetUpper())
         | "Write back aggregated data to BigQuery" >> beam.io.WriteToBigQuery(
             agg_table,
             dataset=dataset_name,
