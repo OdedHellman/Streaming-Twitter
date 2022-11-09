@@ -50,7 +50,8 @@ def run():
     window_size = float(config['project']['WINDOW_SIZE'])
     
     options = PipelineOptions(flags=[project_id, topic_path], save_main_session=True, streaming=True)
-    options.view_as(GoogleCloudOptions).project = project_id
+    google_cloud_options = options.view_as(GoogleCloudOptions)
+    google_cloud_options.project = project_id
 
     # Setting up the tables schemas
     agg_schema = json.load(open("./schemas/agg.json"))
@@ -58,7 +59,7 @@ def run():
     #print(type(agg_schema).__name__)
 
     # Pipeline setup
-    with beam.Pipeline(options=options) as pipeline:
+    with beam.Pipeline(options=google_cloud_options) as pipeline:
 
         # Read from PubSub and parse the data
         tweets = ( pipeline
