@@ -2,7 +2,9 @@
     "fields": [
         {
             "name": "author_id",
-            "type": "STRING"
+            "type": "STRING",
+            "mode": "NULLABLE"
+
         },
         {
             "name": "created_at",
@@ -21,11 +23,15 @@
         },
         {
             "name": "stream_rule",
-            "type": "STRING"
+            "type": "STRING",
+            "mode": "NULLABLE"
+
         },
         {
             "name": "text",
-            "type": "STRING"
+            "type": "STRING",
+            "mode": "NULLABLE"
+
         },
         {
             "name": "edit_history_tweet_ids",
