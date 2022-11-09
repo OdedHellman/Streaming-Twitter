@@ -1,4 +1,3 @@
-from os import environ
 import json
 import configparser
 import tweepy
@@ -10,9 +9,13 @@ class Client(tweepy.StreamingClient):
     """
     Client class for handling Twitter API responses.
     """
-    def __init__(self, stream_rule, topic_path):
-        # Use env var to avoid hardcoding credentials
-        super().__init__(bearer_token=environ['TWITTER_API_BEARER'])
+    def __init__(self, stream_rule, topic_path, bearer_token):
+        try:
+            super().__init__(bearer_token=bearer_token)
+        except ValueError as e:
+            print(f'Something went wrong with Twitter Bearer Token \n{e}')
+            exit(1)
+            
         self.stream_rule = stream_rule
         self.topic_path = topic_path
         self.publisher = PublisherClient()
@@ -42,8 +45,9 @@ def main():
     
     stream_rule = config['project']['rule']
     topic_path = config['gcp']['topic_path']
+    bearer_token = config['twitter']['bearer_token']
 
-    stream = Client(stream_rule, topic_path)
+    stream = Client(stream_rule, topic_path, bearer_token)
     
     # Delete previous rules -> Twitter "Essential" API only allows 1 rule :( 
     rules = stream.get_rules().data
