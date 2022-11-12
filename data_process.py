@@ -54,10 +54,10 @@ def run():
     google_cloud_options.project = project_id
 
     # Setting up the tables schemas
-    agg_schema = json.load(open("./schemas/agg.json"))
-    tweet_schema = json.load(open("./schemas/tweet.json"))
+    agg_schema = parse_json_from_file("./schemas/agg.json")
+    tweet_schema = parse_json_from_file("./schemas/tweet.json")
     #print(type(agg_schema).__name__)
-
+    
     # Pipeline setup
     with beam.Pipeline(options=google_cloud_options) as pipeline:
 
@@ -99,6 +99,11 @@ def run():
         # Keep the pipeline running
         pipeline.run().wait_until_finish()
 
+
+def parse_json_from_file(file_path):
+    """Parse json file and return a dict"""
+    with open(file_path, 'r') as f:
+        return json.load(f)
 
 if __name__ == "__main__":
     run()
